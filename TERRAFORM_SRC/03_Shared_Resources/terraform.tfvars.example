@@ -1,0 +1,10 @@
+aws_region        = "us-east-1"
+environment_name  = "dev"
+business_division = "retail"
+domain_name       = "matespinetti.me"
+tags = {
+  owner       = "Mateo Spinetti"
+  environment = "dev"
+  project     = "devops-2026"
+  managed_by  = "terraform"
+}

@@ -1,0 +1,8 @@
+environment_name  = "dev"
+business_division = "retail"
+db_name           = "catalogdb"
+db_username       = "mydbadmin"
+db_password       = "kalyandb101"
+tags = {
+  Terraform = "true"
+}
