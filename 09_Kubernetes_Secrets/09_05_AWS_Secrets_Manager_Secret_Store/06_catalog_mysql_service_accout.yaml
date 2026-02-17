@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: catalog-mysql-sa
+  namespace: default
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::418674668464:role/catalog-db-secrets-role
+  labels:
+    app.kubernetes.io/name: catalog
+    app.kubernetes.io/instance: catalog
+    app.kubernetes.io/component: service
+    app.kubernetes.io/owner: retail-store-sample

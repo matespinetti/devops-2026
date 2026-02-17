@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog
+  labels:
+    app.kubernetes.io/name: catalog
+spec:
+  # 1. High Availability: Run 3 copies for redundancy
+  replicas: 3
+  # 2. Rolling Update: Update 1 pod at a time to avoid downtime
+  strategy:
+    type: RollingUpdate 
+    rollingUpdate:
+      maxUnavailable: 1
+  # 3. Selector: How the Deployment finds its Pods (Must match template labels)  
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: catalog
+  # 4. Template: Blueprint for the Pods to be created
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: catalog
+    spec:
+      # 5. Pod Security Context: Enforce security best practices
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: catalog
+          # 6. Container Security Context: Enforce security best practices
+          securityContext:
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          # 7. Image: The container image to use
+          image: "public.ecr.aws/aws-containers/retail-store-sample-catalog:1.3.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          # 8. Readiness Probe: Check if the container is ready to serve traffic
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          # 9. Liveness Probe: Check if the container is healthy
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080                 
+          # 10. Resources: Define resource requests and limits
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+

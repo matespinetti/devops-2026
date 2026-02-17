@@ -1,0 +1,10 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc # You will reference this name in your PVC
+provisioner: ebs.csi.aws.com # This connects to the EBS CSI Driver you installed
+reclaimPolicy: Delete 
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  type: gp3
+  encrypted: "true"

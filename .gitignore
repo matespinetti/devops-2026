@@ -1,0 +1,79 @@
+# ----------------------------------------------------------------------
+# TERRAFORM (Crucial to ignore)
+# ----------------------------------------------------------------------
+# Local .terraform directories (plugins, modules)
+**/.terraform/*
+
+# .tfstate files (CONTAIN SECRETS - NEVER COMMIT THESE)
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data,
+# such as password, private keys, and other secrets.
+# (Tip: Commit a "terraform.tfvars.example" file instead)
+*.tfvars
+*.tfvars.json
+
+# Ignore override files as they are usually local customizations
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# ----------------------------------------------------------------------
+# KUBERNETES & HELM
+# ----------------------------------------------------------------------
+# Kubeconfig files (contain access tokens)
+*.kubeconfig
+config
+.kube/
+
+# Helm dependencies (downloaded charts)
+charts/
+Chart.lock
+
+# TLS Secrets (Certificates and Keys)
+*.crt
+*.key
+*.pem
+*.p12
+*.pfx
+
+# ----------------------------------------------------------------------
+# AWS / CLOUD CREDENTIALS (Safety Net)
+# ----------------------------------------------------------------------
+aws_credentials
+aws_config
+.aws/
+
+# ----------------------------------------------------------------------
+# IDE & OS FILES (Noise reduction)
+# ----------------------------------------------------------------------
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# IntelliJ / JetBrains
+.idea/
+*.iml
+
+# ----------------------------------------------------------------------
+# LOGS & TEMP FILES
+# ----------------------------------------------------------------------
+*.log
+tmp/
+temp/

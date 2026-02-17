@@ -1,0 +1,28 @@
+# Application Settings
+app:
+  theme: green # Other options: orange, default, green, teal
+
+
+# Ingress for load balancer
+ingress:
+  enabled: true
+  className: alb
+  annotations: 
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health/liveness
+  tls: []
+  hosts: []
+
+# Add Image and Tag
+image:
+  repository: public.ecr.aws/aws-containers/retail-store-sample-ui
+  pullPolicy: IfNotPresent
+  tag: 1.3.0
+ 
+
+# Release Info
+releaseInfo:
+  enabled: true
+ 
+
