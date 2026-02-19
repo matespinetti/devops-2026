@@ -4,7 +4,7 @@ externalServices:
   enabled: true
   services:
     - name: catalog-db
-      externalName: retail-dev-catalog-db.xxxxxx.us-east-1.rds.amazonaws.com
+      externalName: retail-dev-catalog-db.cy960e2gkuba.us-east-1.rds.amazonaws.com
       ports:
         - name: mysql
           port: 3306
@@ -12,23 +12,20 @@ externalServices:
 
 configMap:
   data:
-    RETAIL_CATALOG_PERSISTENCE_ENDPOINT: "catalog-db.default.svc.cluster.local:3306"
-    RETAIL_CATALOG_PERSISTENCE_DB_NAME: catalogdb
+    RETAIL_CATALOG_PERSISTENCE_ENDPOINT: "catalog-db:3306"
+    RETAIL_CATALOG_PERSISTENCE_PROVIDER: "mysql"
+    
 
 secretProviderClass:
   parameters:
     region: us-east-1
     objects: |
-      - objectName: "retail/dev/catalog/secrets"
+      - objectName: "/retail/dev/catalog/secrets"
         objectType: "secretsmanager"
         jmesPath:
           - path: DB_USER
             objectAlias: DB_USER
           - path: DB_PASS
             objectAlias: DB_PASS
-          - path: DB_HOST
-            objectAlias: DB_HOST
-          - path: DB_PORT
-            objectAlias: DB_PORT
           - path: DB_NAME
             objectAlias: DB_NAME

@@ -1,0 +1,17 @@
+configMap:
+  data:
+    RETAIL_CHECKOUT_PERSISTENCE_PROVIDER: "redis"
+    RETAIL_CHECKOUT_ENDPOINTS_ORDERS: "http://orders:8080"
+    RETAIL_CHECKOUT_SHIPPING_NAME_PREFIX: ""
+
+secretProviderClass:
+  parameters:
+    region: us-east-1
+    usePodIdentity: "true"
+    objects: |
+      - objectName: "/retail/dev/checkout/redis_host"
+        objectType: "ssmparameter"
+        objectAlias: REDIS_HOST
+      - objectName: "/retail/dev/checkout/redis_port"
+        objectType: "ssmparameter"
+        objectAlias: REDIS_PORT

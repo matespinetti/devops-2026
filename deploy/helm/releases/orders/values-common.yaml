@@ -1,0 +1,134 @@
+nameOverride: orders
+fullnameOverride: orders
+
+global:
+  projectName: retail-store
+
+component: api
+
+labels:
+  environment: dev
+  team: ""
+  owner: ""
+
+replicaCount: 2
+
+image:
+  repository: public.ecr.aws/aws-containers/retail-store-sample-orders
+  tag: "1.3.0"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: orders
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+containerPort: 8080
+
+configMap:
+  enabled: true
+  data:
+    PORT: "8080"
+    RETAIL_ORDERS_PERSISTENCE_PROVIDER: "postgres"
+    RETAIL_ORDERS_MESSAGING_PROVIDER: "sqs"
+    RETAIL_ORDERS_PERSISTENCE_ENDPOINT: "orders-db:5432"
+
+envFrom:
+  configMaps:
+    - orders
+
+env:
+  - name: RETAIL_ORDERS_PERSISTENCE_ENDPOINT
+    valueFrom:
+      secretKeyRef:
+        name: orders-secrets
+        key: DB_HOST
+  - name: RETAIL_ORDERS_PERSISTENCE_NAME
+    valueFrom:
+      secretKeyRef:
+        name: orders-secrets
+        key: DB_NAME
+  - name: RETAIL_ORDERS_PERSISTENCE_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: orders-secrets
+        key: DB_USER
+  - name: RETAIL_ORDERS_PERSISTENCE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: orders-secrets
+        key: DB_PASS
+  - name: RETAIL_ORDERS_MESSAGING_SQS_TOPIC
+    valueFrom:
+      secretKeyRef:
+        name: orders-secrets
+        key: SQS_QUEUE_URL
+
+secretProviderClass:
+  enabled: true
+  name: orders-aws-secrets
+  provider: aws
+  parameters:
+    region: us-east-1
+    usePodIdentity: "true"
+    objects: |
+      - objectName: "/retail/dev/orders/secrets"
+        objectType: "secretsmanager"
+        jmesPath:
+          - path: DB_USER
+            objectAlias: DB_USER
+          - path: DB_PASS
+            objectAlias: DB_PASS
+          - path: DB_HOST
+            objectAlias: DB_HOST
+          - path: DB_NAME
+            objectAlias: DB_NAME
+          - path: SQS_QUEUE_URL
+            objectAlias: SQS_QUEUE_URL
+  secretObjects:
+    - secretName: orders-secrets
+      type: Opaque
+      data:
+        - objectName: DB_USER
+          key: DB_USER
+        - objectName: DB_PASS
+          key: DB_PASS
+        - objectName: DB_HOST
+          key: DB_HOST
+        - objectName: DB_NAME
+          key: DB_NAME
+        - objectName: SQS_QUEUE_URL
+          key: SQS_QUEUE_URL
+
+readinessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+hpa:
+  enabled: false
+
+pdb:
+  enabled: false
+
+ingress:
+  enabled: false

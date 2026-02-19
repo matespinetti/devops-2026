@@ -23,6 +23,7 @@ locals {
 
   vpc_id                    = data.terraform_remote_state.eks.outputs.vpc_id
   private_subnet_ids        = data.terraform_remote_state.eks.outputs.private_subnet_ids
+  db_subnet_group_name      = data.terraform_remote_state.shared.outputs.retailstore_rds_subnet_group_id
   public_subnet_ids         = data.terraform_remote_state.eks.outputs.public_subnet_ids
   cluster_security_group_id = data.terraform_remote_state.eks.outputs.cluster_security_group_id
 

@@ -1,0 +1,14 @@
+configMap:
+  data:
+    RETAIL_CART_PERSISTENCE_PROVIDER: "dynamodb"
+    RETAIL_CART_PERSISTENCE_DYNAMODB_ENDPOINT: ""
+    RETAIL_CART_PERSISTENCE_DYNAMODB_CREATE_TABLE: "false"
+
+secretProviderClass:
+  parameters:
+    region: us-east-1
+    usePodIdentity: "true"
+    objects: |
+      - objectName: "/retail/dev/cart/items_table_name"
+        objectType: "ssmparameter"
+        objectAlias: ITEMS_TABLE_NAME

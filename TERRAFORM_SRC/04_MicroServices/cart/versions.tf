@@ -29,6 +29,13 @@ provider "aws" {
     tags = local.common_tags
   }
 }
+
+provider "aws" {
+  alias  = "west2"
+  region = "us-west-2"
+
+
+}
 provider "random" {
   # Configuration options
 }

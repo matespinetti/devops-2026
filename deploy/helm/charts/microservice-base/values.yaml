@@ -1,6 +1,16 @@
 nameOverride: ""
 fullnameOverride: ""
 
+global:
+  projectName: ""
+
+component: "api"
+
+labels:
+  environment: ""
+  team: ""
+  owner: ""
+
 replicaCount: 2
 
 image:

@@ -16,6 +16,8 @@ data "terraform_remote_state" "shared" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 locals {
   service_name = "checkout"
   name_prefix  = "${var.business_division}-${var.environment_name}-${local.service_name}"

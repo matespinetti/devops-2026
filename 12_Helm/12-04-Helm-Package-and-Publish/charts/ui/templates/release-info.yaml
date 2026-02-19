@@ -1,0 +1,16 @@
+{{- if .Values.releaseInfo.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ui.fullname" . }}-release-info
+  labels:
+    {{- include "ui.labels" . | nindent 4 }}
+data:
+  chartName: "{{ .Chart.Name }}"
+  chartVersion: "{{ .Chart.Version }}"
+  appVersion: "{{ .Chart.AppVersion }}"
+  releaseName: "{{ .Release.Name }}"
+  releaseNamespace: "{{ .Release.Namespace }}"
+  releaseRevision: "{{ .Release.Revision }}"
+  releaseTime: "{{ now | date "2006-01-02T15:04:05Z07:00" }}"
+{{- end }}

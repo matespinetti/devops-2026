@@ -1,0 +1,96 @@
+nameOverride: cart
+fullnameOverride: cart
+
+global:
+  projectName: retail-store
+
+component: api
+
+labels:
+  environment: dev
+  team: ""
+  owner: ""
+
+replicaCount: 2
+
+image:
+  repository: public.ecr.aws/aws-containers/retail-store-sample-cart
+  tag: "1.3.0"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: cart
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+containerPort: 8080
+
+configMap:
+  enabled: true
+  data:
+    PORT: "8080"
+    RETAIL_CART_PERSISTENCE_PROVIDER: "dynamodb"
+    RETAIL_CART_PERSISTENCE_DYNAMODB_ENDPOINT: ""
+    RETAIL_CART_PERSISTENCE_DYNAMODB_CREATE_TABLE: "false"
+
+envFrom:
+  configMaps:
+    - cart
+
+env:
+  - name: RETAIL_CART_PERSISTENCE_DYNAMODB_TABLE_NAME
+    valueFrom:
+      secretKeyRef:
+        name: cart-items
+        key: ITEMS_TABLE_NAME
+
+secretProviderClass:
+  enabled: true
+  name: cart-aws-ssm
+  provider: aws
+  parameters:
+    region: us-east-1
+    usePodIdentity: "true"
+    objects: |
+      - objectName: "/retail/dev/cart/items_table_name"
+        objectType: "ssmparameter"
+        objectAlias: ITEMS_TABLE_NAME
+  secretObjects:
+    - secretName: cart-items
+      type: Opaque
+      data:
+        - objectName: ITEMS_TABLE_NAME
+          key: ITEMS_TABLE_NAME
+
+readinessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+hpa:
+  enabled: false
+
+pdb:
+  enabled: false
+
+ingress:
+  enabled: false

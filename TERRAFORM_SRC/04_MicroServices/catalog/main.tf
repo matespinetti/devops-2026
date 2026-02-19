@@ -29,9 +29,8 @@ resource "aws_vpc_security_group_egress_rule" "all_egress_ipv4" {
 # 2. SECRET GENERATION
 # ------------------------------------------------------------------------------
 resource "random_password" "catalog_db_password" {
-  length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  length  = 16
+  special = false
 }
 
 # ------------------------------------------------------------------------------
@@ -54,7 +53,7 @@ module "catalog_db" {
   db_name             = var.db_name
   username            = var.db_username
   password_wo         = random_password.catalog_db_password.result
-  password_wo_version = "1"
+  password_wo_version = "2"
   port                = 3306
 
   multi_az               = false
@@ -93,7 +92,7 @@ resource "aws_secretsmanager_secret_version" "catalog_secrets_version" {
     DB_PASS = random_password.catalog_db_password.result
     DB_HOST = module.catalog_db.db_instance_address
     DB_PORT = module.catalog_db.db_instance_port
-    DB_NAME = module.catalog_db.db_name
+    DB_NAME = module.catalog_db.db_instance_name
     DB_TYPE = "mysql"
   })
 }

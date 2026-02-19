@@ -24,7 +24,20 @@ helm.sh/chart: {{ include "microservice-base.chart" . }}
 app.kubernetes.io/name: {{ include "microservice-base.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/component: {{ default "api" .Values.component | quote }}
+app.kubernetes.io/part-of: {{ default .Chart.Name .Values.global.projectName | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- with .Values.labels }}
+{{- if .environment }}
+environment: {{ .environment | quote }}
+{{- end }}
+{{- if .team }}
+team: {{ .team | quote }}
+{{- end }}
+{{- if .owner }}
+owner: {{ .owner | quote }}
+{{- end }}
+{{- end }}
 {{- end -}}
 
 {{- define "microservice-base.selectorLabels" -}}

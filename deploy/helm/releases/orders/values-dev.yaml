@@ -1,0 +1,33 @@
+externalServices:
+  enabled: true
+  services:
+    - name: orders-db
+      externalName: retail-dev-orders-db.cy960e2gkuba.us-east-1.rds.amazonaws.com
+      ports:
+        - name: postgres
+          port: 5432
+          protocol: TCP
+
+configMap:
+  data:
+    RETAIL_ORDERS_PERSISTENCE_PROVIDER: "postgres"
+    RETAIL_ORDERS_MESSAGING_PROVIDER: "sqs"
+
+secretProviderClass:
+  parameters:
+    region: us-east-1
+    usePodIdentity: "true"
+    objects: |
+      - objectName: "/retail/dev/orders/secrets"
+        objectType: "secretsmanager"
+        jmesPath:
+          - path: DB_USER
+            objectAlias: DB_USER
+          - path: DB_PASS
+            objectAlias: DB_PASS
+          - path: DB_HOST
+            objectAlias: DB_HOST
+          - path: DB_NAME
+            objectAlias: DB_NAME
+          - path: SQS_QUEUE_URL
+            objectAlias: SQS_QUEUE_URL

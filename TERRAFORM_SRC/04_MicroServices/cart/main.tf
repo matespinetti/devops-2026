@@ -1,5 +1,6 @@
 # ------------------------------------------------------------------------------
 # 1. DYNAMODB TABLE (Serverless Database)
+# The cart microservice is hardcoded with USWEST2 
 # ------------------------------------------------------------------------------
 resource "aws_dynamodb_table" "cart_items_table" {
   name         = "${local.name_prefix}-items"
@@ -17,7 +18,7 @@ resource "aws_dynamodb_table" "cart_items_table" {
   }
 
   global_secondary_index {
-    name            = "idx-global-customer-id"
+    name            = "idx_global_customerId"
     projection_type = "ALL"
     hash_key        = "customerId"
   }
@@ -64,8 +65,12 @@ resource "aws_iam_policy" "dynamodb_policy" {
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem"
         ]
-        Effect   = "Allow"
-        Resource = aws_dynamodb_table.cart_items_table.arn
+        Effect = "Allow"
+        Resource = [
+          aws_dynamodb_table.cart_items_table.arn,
+          "${aws_dynamodb_table.cart_items_table.arn}/index/*"
+
+        ]
       }
     ]
   })

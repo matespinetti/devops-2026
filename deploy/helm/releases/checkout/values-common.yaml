@@ -1,0 +1,108 @@
+nameOverride: checkout
+fullnameOverride: checkout
+
+global:
+  projectName: retail-store
+
+component: api
+
+labels:
+  environment: dev
+  team: ""
+  owner: ""
+
+replicaCount: 2
+
+image:
+  repository: public.ecr.aws/aws-containers/retail-store-sample-checkout
+  tag: "1.3.0"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: checkout
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+containerPort: 8080
+
+configMap:
+  enabled: true
+  data:
+    PORT: "8080"
+    RETAIL_CHECKOUT_PERSISTENCE_PROVIDER: "redis"
+    RETAIL_CHECKOUT_ENDPOINTS_ORDERS: "http://orders:8080"
+    RETAIL_CHECKOUT_SHIPPING_NAME_PREFIX: ""
+
+envFrom:
+  configMaps:
+    - checkout
+
+env:
+  - name: REDIS_HOST
+    valueFrom:
+      secretKeyRef:
+        name: checkout-redis
+        key: REDIS_HOST
+  - name: REDIS_PORT
+    valueFrom:
+      secretKeyRef:
+        name: checkout-redis
+        key: REDIS_PORT
+  - name: RETAIL_CHECKOUT_PERSISTENCE_REDIS_URL
+    value: "redis://$(REDIS_HOST):$(REDIS_PORT)"
+
+secretProviderClass:
+  enabled: true
+  name: checkout-aws-ssm
+  provider: aws
+  parameters:
+    region: us-east-1
+    usePodIdentity: "true"
+    objects: |
+      - objectName: "/retail/dev/checkout/redis_host"
+        objectType: "ssmparameter"
+        objectAlias: REDIS_HOST
+      - objectName: "/retail/dev/checkout/redis_port"
+        objectType: "ssmparameter"
+        objectAlias: REDIS_PORT
+  secretObjects:
+    - secretName: checkout-redis
+      type: Opaque
+      data:
+        - objectName: REDIS_HOST
+          key: REDIS_HOST
+        - objectName: REDIS_PORT
+          key: REDIS_PORT
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+hpa:
+  enabled: false
+
+pdb:
+  enabled: false
+
+ingress:
+  enabled: false

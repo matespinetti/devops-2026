@@ -42,9 +42,8 @@ resource "aws_sqs_queue" "queue" {
 # 3. DATABASE (POSTGRESQL)
 # ------------------------------------------------------------------------------
 resource "random_password" "db_password" {
-  length           = 16
-  special          = true
-  override_special = "!@#$%^&*()_+"
+  length  = 16
+  special = false
 }
 
 module "orders_db" {
@@ -58,13 +57,16 @@ module "orders_db" {
   allocated_storage    = 20
   storage_type         = "gp3"
 
+  create_db_option_group    = false
+  create_db_parameter_group = false
+
   username                    = var.db_user
   manage_master_user_password = false
   password_wo                 = random_password.db_password.result
   password_wo_version         = "1"
   db_name                     = var.db_name
 
-  subnet_ids             = local.private_subnet_ids
+  db_subnet_group_name   = local.db_subnet_group_name
   vpc_security_group_ids = [aws_security_group.database_security_group.id]
 
   multi_az                     = false
