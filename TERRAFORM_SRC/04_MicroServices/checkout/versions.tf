@@ -14,7 +14,7 @@ terraform {
   }
   backend "s3" {
     bucket       = "tfstate-dev-us-east-1-m75hlh"
-    key          = "microservices/catalog/dev/terraform.tfstate"
+    key          = "microservices/checkout/dev/terraform.tfstate"
     region       = "us-east-1"
     encrypt      = true
     use_lockfile = true

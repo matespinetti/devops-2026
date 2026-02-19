@@ -1,15 +1,31 @@
 # main.tf
 
-# --- 1. Security Group for RDS ---
+# ------------------------------------------------------------------------------
+# 1. Security Group for RDS 
+# ------------------------------------------------------------------------------
+resource "aws_security_group" "rds_sg" {
+  name        = "catalog_db_sg"
+  description = "Security group for RDS"
+  vpc_id      = local.vpc_id
+  tags = {
+    Name = "${local.name}-rds-sg"
+  }
+
+}
+
+# ------------------------------------------------------------------------------
+# 2. Security Group for Catalog DB 
+# ------------------------------------------------------------------------------
 resource "aws_security_group" "catalog_db_sg" {
   name        = "catalog_db_sg"
   description = "Security group for catalog database"
   vpc_id      = local.vpc_id
-  tags = merge(var.tags, {
-    Name = "${local.name}-catalog-db-sg"
-  })
-
+  tags = {
+    Name = "${local.name}-db-sg"
+  }
 }
+
+
 
 resource "aws_vpc_security_group_ingress_rule" "allow_mysql_ipv4" {
   security_group_id            = aws_security_group.catalog_db_sg.id
@@ -26,11 +42,26 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
 }
 
 
-### DB Instance
-module "rds_catalog" {
+# ------------------------------------------------------------------------------
+# 3. SECRET GENERATION 
+# ------------------------------------------------------------------------------
+
+resource "random_password" "catalog_db_password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
+
+
+
+# ------------------------------------------------------------------------------
+# 4. RDS Instance 
+# ------------------------------------------------------------------------------
+module "rds" {
   source                      = "terraform-aws-modules/rds/aws"
   version                     = "7.1.0"
-  identifier                  = "${local.name}-catalog-db"
+  identifier                  = "${local.name}-db"
   engine                      = "mysql"
   engine_version              = "8.4"
   family                      = "mysql8.4"
@@ -42,7 +73,7 @@ module "rds_catalog" {
 
   db_name             = var.db_name
   username            = var.db_username
-  password_wo         = var.db_password
+  password_wo         = random_password.catalog_db_password.result
   password_wo_version = "1"
   port                = 3306
 
@@ -57,18 +88,49 @@ module "rds_catalog" {
   skip_final_snapshot = true
   deletion_protection = false
 
-  tags = merge(var.tags, {
-    Name = "${local.name}-catalog-db"
-  })
+  tags = {
+    Name = "${local.name}-db"
+  }
 
 
 
 }
 
-### IAM Policy for Service Account
-resource "aws_iam_policy" "catalog_policy" {
-  name        = "catalog_policy"
-  description = "IAM policy for catalog service account"
+
+# ------------------------------------------------------------------------------
+# 5. SECRET 
+# ------------------------------------------------------------------------------
+resource "aws_secretsmanager_secret" "catalog_config" {
+  name                    = "${var.business_division}/${var.environment_name}/catalog/secrets"
+  description             = "Password for catalog database"
+  recovery_window_in_days = 0
+  tags = {
+    Name = "${var.business_division}/${var.environment_name}/catalog/secrets"
+  }
+}
+
+resource "aws_secretsmanager_secret_version" "catalog_config_val" {
+  secret_id = aws_secretsmanager_secret.catalog_config.id
+  secret_string = jsonencode({
+    username = var.db_username
+    password = random_password.catalog_db_password.result
+    host     = module.rds.db_instance_address
+    port     = module.rds.db_instance_port
+    db_name  = module.rds.db_name
+    engine   = "mysql"
+
+  })
+}
+
+
+# ------------------------------------------------------------------------------
+# 6. IAM ROLE
+# ------------------------------------------------------------------------------
+
+resource "aws_iam_policy" "catalog_secret_policy" {
+  name        = "${local.name}-secret-policy"
+  description = "IAM policy for catalog service to access its secrets manager"
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -78,20 +140,18 @@ resource "aws_iam_policy" "catalog_policy" {
           "secretsmanager:DescribeSecret"
         ]
         Effect   = "Allow"
-        Resource = "*"
+        Resource = aws_secretsmanager_secret.catalog_config.arn
       }
     ]
   })
 }
-
-# ---- IAM Role
 resource "aws_iam_role" "catalog_role" {
   name = "catalog_role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole"
+        Action = ["sts:AssumeRole", "sts:TagSession"]
         Effect = "Allow"
         Principal = {
           Service = "pods.eks.amazonaws.com"
@@ -99,18 +159,26 @@ resource "aws_iam_role" "catalog_role" {
       }
     ]
   })
+  tags = {
+    Name = "${local.name}-role"
+  }
 }
 
-resource "aws_iam_role_policy_attachment" "catalog_policy_attachment" {
-  policy_arn = aws_iam_policy.catalog_policy.arn
+resource "aws_iam_role_policy_attachment" "catalog_secret_policy_attachment" {
+  policy_arn = aws_iam_policy.catalog_secret_policy.arn
   role       = aws_iam_role.catalog_role.name
 }
 
 
-# --- The assocaition(Binding identity to K8s)
+# ------------------------------------------------------------------------------
+# 7. EKS POD IDENTITY ASSOCIATION
+# ------------------------------------------------------------------------------
 resource "aws_eks_pod_identity_association" "catalog" {
   cluster_name    = data.terraform_remote_state.eks.outputs.cluster_name
   namespace       = "default"
-  service_account = "catalog-mysql-sa"
-  role_arn        = aws_iam_role.catalog_secrets_role.arn
+  service_account = "catalog"
+  role_arn        = aws_iam_role.catalog_role.arn
+  tags = {
+    Name = "${local.name}-pod-identity-association"
+  }
 }

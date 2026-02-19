@@ -26,29 +26,3 @@ variable "owner_email" {
   default     = "mateospinetti1@gmail.com"
 }
 
-variable "db_name" {
-  description = "Database name"
-  type        = string
-  default     = "catalogdb"
-}
-
-variable "db_username" {
-  description = "Database username"
-  type        = string
-
-}
-
-variable "db_password" {
-  description = "Database password"
-  type        = string
-
-}
-
-
-variable "tags" {
-  description = "Tags to apply to EKS and related resources"
-  type        = map(string)
-  default = {
-    Terraform = "true"
-  }
-}

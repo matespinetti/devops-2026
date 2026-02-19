@@ -19,19 +19,19 @@ data "terraform_remote_state" "shared" {
 }
 
 locals {
+  name                      = "${var.business_division}-${var.environment_name}-orders"
   vpc_id                    = data.terraform_remote_state.eks.outputs.vpc_id
   private_subnet_ids        = data.terraform_remote_state.eks.outputs.private_subnet_ids
   public_subnet_ids         = data.terraform_remote_state.eks.outputs.public_subnet_ids
   cluster_security_group_id = data.terraform_remote_state.eks.outputs.cluster_security_group_id
-  db_subnet_group_id        = data.terraform_remote_state.shared.outputs.retailstore_rds_main.id
-  name                      = "${var.business_division}-${var.environment_name}-catalog"
-  secret_policy_arn         = data.terraform_remote_state.shared.outputs.retailstore_db_secret_policy.arn
+  db_subnet_group_id        = data.terraform_remote_state.shared.outputs.retailstore_elasticache_subnet_group_id
   common_tags = {
     Project     = "RetailStore"
     Environment = var.environment_name
     Division    = var.business_division
-    Service     = "Catalog"
+    Service     = "Orders"
     ManagedBy   = "Terraform"
     Owner       = var.owner_email
+
   }
 }

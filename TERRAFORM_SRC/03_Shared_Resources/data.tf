@@ -11,7 +11,9 @@ data "aws_route53_zone" "main" {
   name = "${var.domain_name}."
 }
 
+data "aws_caller_identity" "current" {}
+
 locals {
   private_subnet_ids = data.terraform_remote_state.vpc.outputs.private_subnet_ids
-  name               = "${var.environment_name}-${var.business_division}"
+  name               = "${var.business_division}-${var.environment_name}"
 }

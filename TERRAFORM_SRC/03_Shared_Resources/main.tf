@@ -1,12 +1,21 @@
-#- 1. Subnet Group for DBs
-resource "aws_db_subnet_group" "main" {
-  name        = "${local.name}-db-subnet-group"
+#- 1. Subnet Group for RDS DBs
+resource "aws_db_subnet_group" "retailstore_rds_main" {
+  name        = "${local.name}-rds-subnet-group"
   description = "DB subnet group for ${local.name}"
   subnet_ids  = local.private_subnet_ids
 
 }
 
-#- 2. ACM Certificate for Domain
+#- 2. Subnet Group for ElastiCache
+resource "aws_elasticache_subnet_group" "retailstore_elasticache_main" {
+  name        = "${local.name}-elasticache-subnet-group"
+  description = "ElastiCache subnet group for ${local.name}"
+  subnet_ids  = local.private_subnet_ids
+}
+
+
+
+#- 3. ACM Certificate for Domain
 resource "aws_acm_certificate" "main" {
   domain_name               = data.aws_route53_zone.main.name
   validation_method         = "DNS"
@@ -17,7 +26,7 @@ resource "aws_acm_certificate" "main" {
   tags = var.tags
 }
 
-#- 3. Create the DNS records for ACM validation
+#- 4. Create the DNS records for ACM validation
 resource "aws_route53_record" "cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.main.domain_validation_options : dvo.domain_name => {
@@ -34,8 +43,28 @@ resource "aws_route53_record" "cert_validation" {
   records         = [each.value.record]
 }
 
-#- 4. Wait for ACM validation
+#- 5. Wait for ACM validation
 resource "aws_acm_certificate_validation" "main" {
   certificate_arn         = aws_acm_certificate.main.arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+
+#- 6. Iam Policy: Allow access to all retailstore-db-scretes
+resource "aws_iam_policy" "retailstore_db_secret_policy" {
+  name = "${local.name}-retailstore-db-secret-policy"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:retailstore/*"
+      }
+    ]
+  })
+
 }
