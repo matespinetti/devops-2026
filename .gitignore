@@ -36,9 +36,9 @@ terraform.rc
 config
 .kube/
 
-# Helm dependencies (downloaded charts)
-charts/
-Chart.lock
+# # Helm dependencies (downloaded charts)
+# charts/
+# Chart.lock
 
 # TLS Secrets (Certificates and Keys)
 *.crt

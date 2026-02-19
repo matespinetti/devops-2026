@@ -1,0 +1,22 @@
+{{- if and .Values.externalServices.enabled .Values.externalServices.services }}
+{{- range .Values.externalServices.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  labels:
+    {{- include "microservice-base.labels" $ | nindent 4 }}
+spec:
+  type: ExternalName
+  externalName: {{ .externalName }}
+  {{- if .ports }}
+  ports:
+    {{- range .ports }}
+    - name: {{ .name | default "tcp" }}
+      port: {{ .port }}
+      protocol: {{ .protocol | default "TCP" }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}

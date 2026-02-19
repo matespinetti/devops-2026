@@ -1,0 +1,133 @@
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 2
+
+image:
+  repository: ""
+  tag: ""
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+containerSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+externalServices:
+  enabled: false
+  services: []
+  # Example:
+  # services:
+  #   - name: catalog-db
+  #     externalName: mydb.abc123.us-east-1.rds.amazonaws.com
+  #     ports:
+  #       - name: mysql
+  #         port: 3306
+  #         protocol: TCP
+
+containerPort: 8080
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+env: []
+envFrom:
+  configMaps: []
+  secrets: []
+
+configMap:
+  enabled: false
+  data: {}
+
+secretProviderClass:
+  enabled: false
+  name: ""
+  provider: aws
+  parameters: {}
+  secretObjects: []
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+startupProbe:
+  enabled: false
+  path: /health
+  failureThreshold: 30
+  periodSeconds: 10
+
+volumeMounts:
+  tmp:
+    enabled: true
+    mountPath: /tmp
+
+extraVolumeMounts: []
+extraVolumes: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+topologySpreadConstraints: []
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 75
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+networkPolicy:
+  enabled: false
+  ingress:
+    namespaces: []
+  egress:
+    allowDNS: true
+    cidrs: []
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
+
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 10s
+  path: /metrics

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: microservice-base
+description: Reusable production-oriented Helm chart for microservices on EKS
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

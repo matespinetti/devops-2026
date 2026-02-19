@@ -1,0 +1,41 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "microservice-base.fullname" . }}
+  labels:
+    {{- include "microservice-base.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "microservice-base.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+      {{- if .Values.networkPolicy.ingress.namespaces }}
+        {{- range .Values.networkPolicy.ingress.namespaces }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . }}
+        {{- end }}
+      {{- else }}
+        - podSelector: {}
+      {{- end }}
+  egress:
+    - {{- if or .Values.networkPolicy.egress.allowDNS .Values.networkPolicy.egress.cidrs }}
+      to:
+        {{- if .Values.networkPolicy.egress.allowDNS }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        {{- end }}
+        {{- range .Values.networkPolicy.egress.cidrs }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+      {{- else }}
+      {}
+      {{- end }}
+{{- end }}
