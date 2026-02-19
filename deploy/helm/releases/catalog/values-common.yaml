@@ -1,0 +1,113 @@
+nameOverride: catalog
+fullnameOverride: catalog
+
+image:
+  repository: public.ecr.aws/aws-containers/retail-store-sample-catalog
+  tag: "1.2.4"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: catalog
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+externalServices:
+  enabled: false
+  services: []
+  # services:
+  #   - name: catalog-db
+  #     externalName: retail-dev-catalog-db.xxxxxx.us-east-1.rds.amazonaws.com
+  #     ports:
+  #       - name: mysql
+  #         port: 3306
+  #         protocol: TCP
+
+containerPort: 8080
+
+configMap:
+  enabled: true
+  data:
+    RETAIL_CATALOG_PERSISTENCE_PROVIDER: mysql
+    RETAIL_CATALOG_PERSISTENCE_ENDPOINT: "catalog-db.example.internal:3306"
+    RETAIL_CATALOG_PERSISTENCE_DB_NAME: catalogdb
+
+envFrom:
+  configMaps:
+    - catalog
+  secrets:
+    - catalog-db
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 75
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+secretProviderClass:
+  enabled: true
+  name: catalog-aws-secrets
+  provider: aws
+  parameters:
+    region: us-east-1
+    objects: |
+      - objectName: "retail/dev/catalog/secrets"
+        objectType: "secretsmanager"
+        jmesPath:
+          - path: DB_USER
+            objectAlias: DB_USER
+          - path: DB_PASS
+            objectAlias: DB_PASS
+          - path: DB_HOST
+            objectAlias: DB_HOST
+          - path: DB_PORT
+            objectAlias: DB_PORT
+          - path: DB_NAME
+            objectAlias: DB_NAME
+  secretObjects:
+    - secretName: catalog-db
+      type: Opaque
+      data:
+        - objectName: DB_USER
+          key: RETAIL_CATALOG_PERSISTENCE_USERNAME
+        - objectName: DB_PASS
+          key: RETAIL_CATALOG_PERSISTENCE_PASSWORD
+        - objectName: DB_HOST
+          key: DB_HOST
+        - objectName: DB_PORT
+          key: DB_PORT
+        - objectName: DB_NAME
+          key: DB_NAME
+
+networkPolicy:
+  enabled: false
+
+ingress:
+  enabled: false

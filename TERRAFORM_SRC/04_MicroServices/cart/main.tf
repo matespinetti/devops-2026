@@ -1,21 +1,23 @@
 # ------------------------------------------------------------------------------
 # 1. DYNAMODB TABLE (Serverless Database)
 # ------------------------------------------------------------------------------
-resource "aws_dynamodb_table" "items" {
-  name         = "${local.name}-items"
+resource "aws_dynamodb_table" "cart_items_table" {
+  name         = "${local.name_prefix}-items"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
+
   attribute {
     name = "id"
     type = "S"
   }
+
   attribute {
     name = "customerId"
     type = "S"
   }
-  #Global Secondary Index for customer-based lookups
+
   global_secondary_index {
-    name            = "idx_global_customerId"
+    name            = "idx-global-customer-id"
     projection_type = "ALL"
     hash_key        = "customerId"
   }
@@ -24,32 +26,29 @@ resource "aws_dynamodb_table" "items" {
     enabled = true
   }
 
-
   tags = {
-    Name = "${local.name}-items"
+    Name = "${local.name_prefix}-items"
   }
 }
 
 # ------------------------------------------------------------------------------
 # 2. SSM PARAMETERS
 # ------------------------------------------------------------------------------
-
-resource "aws_ssm_parameter" "cart_items_table_name" {
-  name  = "${var.business_division}/${var.environment_name}/cart/items_table_name"
+resource "aws_ssm_parameter" "items_table_name" {
+  name  = "${local.path_prefix}/items_table_name"
   type  = "String"
-  value = aws_dynamodb_table.items.name
+  value = aws_dynamodb_table.cart_items_table.name
+
   tags = {
-    Name = "${local.name}-items-table-name"
+    Name = "${local.name_prefix}-items-table-name"
   }
 }
 
 # ------------------------------------------------------------------------------
-# 3. IAM POLICIES (Least Privilege - Solo acceso a ESTA tabla)
+# 3. IAM POLICIES
 # ------------------------------------------------------------------------------
-
-# A. Access to DynamoDB table
-resource "aws_iam_policy" "cart_dynamodb_policy" {
-  name        = "${local.name}-dynamodb-policy"
+resource "aws_iam_policy" "dynamodb_policy" {
+  name        = "${local.name_prefix}-dynamodb-policy"
   description = "IAM policy for cart service to access its DynamoDB table"
 
   policy = jsonencode({
@@ -66,15 +65,18 @@ resource "aws_iam_policy" "cart_dynamodb_policy" {
           "dynamodb:BatchWriteItem"
         ]
         Effect   = "Allow"
-        Resource = aws_dynamodb_table.items.arn
+        Resource = aws_dynamodb_table.cart_items_table.arn
       }
     ]
   })
+
+  tags = {
+    Name = "${local.name_prefix}-dynamodb-policy"
+  }
 }
 
-# B. Access to SSM Parameter Store
-resource "aws_iam_policy" "cart_ssm_policy" {
-  name        = "${local.name}-ssm-policy"
+resource "aws_iam_policy" "ssm_policy" {
+  name        = "${local.name_prefix}-ssm-policy"
   description = "IAM policy for cart service to access its SSM Parameter Store"
 
   policy = jsonencode({
@@ -86,17 +88,22 @@ resource "aws_iam_policy" "cart_ssm_policy" {
           "ssm:GetParameters"
         ]
         Effect   = "Allow"
-        Resource = aws_ssm_parameter.cart_items_table_name.arn
+        Resource = aws_ssm_parameter.items_table_name.arn
       }
     ]
   })
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-policy"
+  }
 }
 
 # ------------------------------------------------------------------------------
 # 4. IAM ROLE
 # ------------------------------------------------------------------------------
-resource "aws_iam_role" "cart_role" {
-  name = "cart_role"
+resource "aws_iam_role" "service_role" {
+  name = "${local.name_prefix}-role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -109,34 +116,32 @@ resource "aws_iam_role" "cart_role" {
       }
     ]
   })
+
   tags = {
-    Name = "${local.name}-role"
+    Name = "${local.name_prefix}-role"
   }
 }
 
-resource "aws_iam_role_policy_attachment" "cart_dynamodb_policy_attachment" {
-  policy_arn = aws_iam_policy.cart_dynamodb_policy.arn
-  role       = aws_iam_role.cart_role.name
+resource "aws_iam_role_policy_attachment" "dynamodb_policy_attachment" {
+  policy_arn = aws_iam_policy.dynamodb_policy.arn
+  role       = aws_iam_role.service_role.name
 }
 
-resource "aws_iam_role_policy_attachment" "cart_ssm_policy_attachment" {
-  policy_arn = aws_iam_policy.cart_ssm_policy.arn
-  role       = aws_iam_role.cart_role.name
+resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
+  policy_arn = aws_iam_policy.ssm_policy.arn
+  role       = aws_iam_role.service_role.name
 }
 
 # ------------------------------------------------------------------------------
 # 5. EKS POD IDENTITY ASSOCIATION
 # ------------------------------------------------------------------------------
-resource "aws_eks_pod_identity_association" "cart" {
-  cluster_name    = data.terraform_remote_state.eks.outputs.cluster_name
+resource "aws_eks_pod_identity_association" "service_pod_identity" {
+  cluster_name    = data.terraform_remote_state.eks.outputs.eks_cluster_name
   namespace       = "default"
   service_account = "cart"
-  role_arn        = aws_iam_role.cart_role.arn
+  role_arn        = aws_iam_role.service_role.arn
+
   tags = {
-    Name = "${local.name}-pod-identity-association"
+    Name = "${local.name_prefix}-pod-identity-association"
   }
 }
-
-
-
-

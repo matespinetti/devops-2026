@@ -1,14 +1,14 @@
 output "cart_role_arn" {
-  value       = aws_iam_role.cart_role.arn
-  description = "Cart role ARN"
+  description = "ARN of the cart IAM role"
+  value       = aws_iam_role.service_role.arn
 }
 
 output "cart_pod_identity_association_id" {
-  value       = aws_eks_pod_identity_association.cart.id
-  description = "Cart pod identity association ID"
+  description = "ID of the cart Pod Identity association"
+  value       = aws_eks_pod_identity_association.service_pod_identity.id
 }
 
-output "cart_ssm_param_items_table_name" {
-  value       = aws_ssm_parameter.cart_items_table_name.name
-  description = "Path to the param"
+output "cart_items_table_name_parameter" {
+  description = "SSM parameter path for cart items table name"
+  value       = aws_ssm_parameter.items_table_name.name
 }

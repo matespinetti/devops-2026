@@ -1,15 +1,19 @@
 output "catalog_secret_arn" {
-  value = aws_secretsmanager_secret.catalog_config.arn
-
+  description = "ARN of the catalog secret"
+  value       = aws_secretsmanager_secret.catalog_secrets.arn
 }
+
 output "catalog_db_arn" {
-  value = module.rds.db_instance_arn
+  description = "ARN of the catalog RDS instance"
+  value       = module.catalog_db.db_instance_arn
 }
 
 output "catalog_db_endpoint" {
-  value = module.rds.db_instance_endpoint
+  description = "Endpoint of the catalog RDS instance"
+  value       = module.catalog_db.db_instance_endpoint
 }
 
 output "catalog_role_arn" {
-  value = aws_iam_role.catalog_role.arn
+  description = "ARN of the catalog IAM role"
+  value       = aws_iam_role.service_role.arn
 }
