@@ -1,0 +1,75 @@
+nameOverride: ui
+fullnameOverride: ui
+
+global:
+  projectName: retail-store
+
+component: ui
+
+labels:
+  environment: dev
+  team: ""
+  owner: ""
+
+replicaCount: 2
+
+image:
+  repository: public.ecr.aws/aws-containers/retail-store-sample-ui
+  tag: "1.2.4"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ui
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+containerPort: 8080
+
+configMap:
+  enabled: true
+  data:
+    PORT: "8080"
+    RETAIL_UI_THEME: "default"
+    RETAIL_UI_DISABLE_DEMO_WARNINGS: "false"
+    RETAIL_UI_PRODUCT_IMAGES_PATH: ""
+    RETAIL_UI_ENDPOINTS_CATALOG: "http://catalog:80"
+    RETAIL_UI_ENDPOINTS_CARTS: "http://cart:80"
+    RETAIL_UI_ENDPOINTS_ORDERS: "http://orders:80"
+    RETAIL_UI_ENDPOINTS_CHECKOUT: "http://checkout:80"
+
+envFrom:
+  configMaps:
+    - ui
+
+readinessProbe:
+  enabled: true
+  path: /actuator/health/readiness
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  path: /actuator/health/liveness
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+hpa:
+  enabled: false
+
+pdb:
+  enabled: false
+
+ingress:
+  enabled: false

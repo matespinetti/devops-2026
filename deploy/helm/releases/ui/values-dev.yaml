@@ -1,0 +1,16 @@
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/load-balancer-name: retail-store-ui-dev
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:418674668464:certificate/656c5146-a33d-4d62-94d7-c6ec640ac1be
+    external-dns.alpha.kubernetes.io/hostname: retail-dev.matespinetti.me
+  hosts:
+    - host: "retail-dev.matespinetti.me"
+      paths:
+        - path: /
+          pathType: Prefix
