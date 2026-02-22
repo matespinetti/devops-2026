@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karpenter-autoscale-demo-spot
+  labels:
+    demo: karpenter-spot
+spec:
+  replicas: 5  # 5 pods = ~2.5 vCPUs needed
+  selector:
+    matchLabels:
+      app: autoscale-demo-spot
+  template:
+    metadata:
+      labels:
+        app: autoscale-demo-spot
+    spec:
+      # THIS IS CRITICAL - Forces pods to run ONLY on Spot nodes
+      nodeSelector:
+        karpenter.sh/capacity-type: spot    
+      containers:
+        - name: pause
+          image: public.ecr.aws/eks-distro/kubernetes/pause:3.9
+          resources:
+            requests:
+              cpu: "500m"      # 0.5 vCPU per pod
+              memory: "256Mi"  # 256MB per pod
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

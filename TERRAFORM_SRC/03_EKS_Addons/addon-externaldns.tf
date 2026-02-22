@@ -1,6 +1,6 @@
 resource "aws_iam_policy" "externaldns_policy" {
   name        = "externaldns-policy"
-  description = "Permite a ExternalDNS gestionar registros en Route 53"
+  description = "Allows ExternalDNS to manage Route53 records"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -21,6 +21,8 @@ resource "aws_iam_policy" "externaldns_policy" {
       }
     ]
   })
+
+  tags = var.tags
 }
 
 resource "aws_iam_role" "externaldns_role" {
@@ -38,6 +40,8 @@ resource "aws_iam_role" "externaldns_role" {
       }
     ]
   })
+
+  tags = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "externaldns_policy_attachment" {
@@ -46,32 +50,38 @@ resource "aws_iam_role_policy_attachment" "externaldns_policy_attachment" {
 }
 
 resource "aws_eks_pod_identity_association" "externaldns_pod_identity_association" {
-  cluster_name    = aws_eks_cluster.main.name
+  cluster_name    = data.terraform_remote_state.eks.outputs.eks_cluster_name
   namespace       = "kube-system"
   service_account = "external-dns"
   role_arn        = aws_iam_role.externaldns_role.arn
+
+  depends_on = [aws_eks_addon.pod_identity_agent]
 }
 
-
-resource "helm_release" "external_sdns" {
+resource "helm_release" "external_dns" {
   name       = "external-dns"
   repository = "https://kubernetes-sigs.github.io/external-dns/"
   chart      = "external-dns"
   namespace  = "kube-system"
   version    = "1.20.0"
 
-  set = [{
-    name  = "provider",
-    value = "aws"
+  set = [
+    {
+      name  = "provider"
+      value = "aws"
     },
     {
-      name  = "serviceAccount.name",
+      name  = "serviceAccount.name"
       value = "external-dns"
     },
-    # Importante: Esto evita que ExternalDNS borre registros que no creó él
     {
       name  = "policy"
-      value = "sync" # 'upsert-only' si tienes miedo de que borre algo
+      value = "sync"
     }
+  ]
+
+  depends_on = [
+    aws_eks_pod_identity_association.externaldns_pod_identity_association,
+    aws_eks_addon.pod_identity_agent
   ]
 }

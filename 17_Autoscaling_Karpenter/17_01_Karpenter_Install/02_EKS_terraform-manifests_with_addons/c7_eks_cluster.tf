@@ -1,13 +1,13 @@
-# ------------------
+# ------------------------------------------------------------------------------
 # Create the AWS EKS Cluster
 # This is the control plane for Kubernetes on AWS
 # ------------------------------------------------------------------------------
 resource "aws_eks_cluster" "main" {
   # Full cluster name built from business + environment + cluster_name
-  name = local.eks_cluster_name
+  name     = local.eks_cluster_name
 
   # Kubernetes version to use for the control plane
-  version = var.cluster_version
+  version  = var.cluster_version
 
   # IAM role used by EKS to manage the control plane
   role_arn = aws_iam_role.eks_cluster.arn
@@ -21,10 +21,10 @@ resource "aws_eks_cluster" "main" {
     endpoint_private_access = var.cluster_endpoint_private_access
 
     # Allow access to public endpoint (from internet, controlled via CIDRs)
-    endpoint_public_access = var.cluster_endpoint_public_access
+    endpoint_public_access  = var.cluster_endpoint_public_access
 
     # List of CIDRs allowed to reach the public endpoint
-    public_access_cidrs = var.cluster_endpoint_public_access_cidrs
+    public_access_cidrs     = var.cluster_endpoint_public_access_cidrs
   }
 
   # Define the service CIDR range used by Kubernetes services (optional)
@@ -34,11 +34,11 @@ resource "aws_eks_cluster" "main" {
 
   # Enable EKS control plane logging for visibility and debugging
   enabled_cluster_log_types = [
-    "api",               # API server audit logs
-    "audit",             # Kubernetes audit logs
-    "authenticator",     # Authenticator logs for IAM auth
-    "controllerManager", # Logs for controller manager
-    "scheduler"          # Logs for pod scheduling
+    "api",                 # API server audit logs
+    "audit",               # Kubernetes audit logs
+    "authenticator",       # Authenticator logs for IAM auth
+    "controllerManager",   # Logs for controller manager
+    "scheduler"            # Logs for pod scheduling
   ]
 
   # Ensure IAM policy attachments complete before cluster creation
@@ -70,34 +70,10 @@ resource "aws_eks_cluster" "main" {
   # - And we guarantee you (the creator) always have admin access
   # ----------------------------------------------------------------------------
   access_config {
-    authentication_mode                         = "API_AND_CONFIG_MAP" # Three options: CONFIG_MAP, API, API_AND_CONFIG_MAP
+    authentication_mode = "API_AND_CONFIG_MAP" # Three options: CONFIG_MAP, API, API_AND_CONFIG_MAP
     bootstrap_cluster_creator_admin_permissions = true
   }
 
 }
 
-data "aws_eks_addon_version" "pia_default" {
-  addon_name         = "eks-pod-identity-agent"
-  kubernetes_version = aws_eks_cluster.main.version
-}
 
-data "aws_eks_addon_version" "pia_latest" {
-  addon_name         = "eks-pod-identity-agent"
-  kubernetes_version = aws_eks_cluster.main.version
-  most_recent        = true
-}
-
-resource "aws_eks_addon" "pod_identity_agent" {
-  cluster_name                = aws_eks_cluster.main.name
-  addon_name                  = "eks-pod-identity-agent"
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
-  addon_version               = data.aws_eks_addon_version.pia_latest.version
-
-  depends_on = [
-    aws_eks_node_group.private_nodes
-  ]
-
-
-
-}

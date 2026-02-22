@@ -4,16 +4,14 @@ resource "helm_release" "secrets_csi_driver" {
   repository = "https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts"
   namespace  = "kube-system"
 
-
   set = [
     {
       name  = "syncSecret.enabled"
       value = "true"
     }
   ]
-  depends_on = [
-    aws_eks_cluster.main
-  ]
+
+  depends_on = [aws_eks_addon.pod_identity_agent]
 }
 
 resource "helm_release" "secrets_provider_aws" {
@@ -28,7 +26,6 @@ resource "helm_release" "secrets_provider_aws" {
       value = "false"
     }
   ]
-  depends_on = [
-    helm_release.secrets_csi_driver
-  ]
+
+  depends_on = [helm_release.secrets_csi_driver]
 }

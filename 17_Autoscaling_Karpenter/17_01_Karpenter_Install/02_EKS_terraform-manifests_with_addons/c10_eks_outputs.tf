@@ -72,13 +72,12 @@ output "to_configure_kubectl" {
   value       = "aws eks --region ${var.aws_region} update-kubeconfig --name ${local.eks_cluster_name}"
 }
 
+
 # ------------------------------------------------------------------------------
-# Output the Security Group ID attached to both Control Plane and Worker Nodes
-# Useful for configuring security group rules for the EKS cluster
+# Output the EKS Cluster Security Group ID
+# Used by downstream services like RDS, ElastiCache, etc.
 # ------------------------------------------------------------------------------
-output "cluster_security_group_id" {
-  description = "The security group attached to both Control Plan and Worker Nodes"
+output "eks_cluster_security_group_id" {
+  description = "Security group associated with the EKS cluster (used for control plane to node communication)"
   value       = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
-
 }
-
