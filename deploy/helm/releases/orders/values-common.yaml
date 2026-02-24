@@ -7,11 +7,8 @@ global:
 component: api
 
 labels:
-  environment: dev
-  team: ""
-  owner: ""
-
-replicaCount: 2
+  team: "backend"
+  owner: "matespinetti"
 
 image:
   repository: public.ecr.aws/aws-containers/retail-store-sample-orders
@@ -28,6 +25,10 @@ service:
   port: 80
   targetPort: 8080
 
+externalServices:
+  enabled: false
+  services: []
+
 containerPort: 8080
 
 configMap:
@@ -36,7 +37,7 @@ configMap:
     PORT: "8080"
     RETAIL_ORDERS_PERSISTENCE_PROVIDER: "postgres"
     RETAIL_ORDERS_MESSAGING_PROVIDER: "sqs"
-    RETAIL_ORDERS_PERSISTENCE_ENDPOINT: "orders-db:5432"
+    RETAIL_ORDERS_PERSISTENCE_ENDPOINT: ""
 
 envFrom:
   configMaps:
@@ -73,37 +74,6 @@ secretProviderClass:
   enabled: true
   name: orders-aws-secrets
   provider: aws
-  parameters:
-    region: us-east-1
-    usePodIdentity: "true"
-    objects: |
-      - objectName: "/retail/dev/orders/secrets"
-        objectType: "secretsmanager"
-        jmesPath:
-          - path: DB_USER
-            objectAlias: DB_USER
-          - path: DB_PASS
-            objectAlias: DB_PASS
-          - path: DB_HOST
-            objectAlias: DB_HOST
-          - path: DB_NAME
-            objectAlias: DB_NAME
-          - path: SQS_QUEUE_URL
-            objectAlias: SQS_QUEUE_URL
-  secretObjects:
-    - secretName: orders-secrets
-      type: Opaque
-      data:
-        - objectName: DB_USER
-          key: DB_USER
-        - objectName: DB_PASS
-          key: DB_PASS
-        - objectName: DB_HOST
-          key: DB_HOST
-        - objectName: DB_NAME
-          key: DB_NAME
-        - objectName: SQS_QUEUE_URL
-          key: SQS_QUEUE_URL
 
 readinessProbe:
   enabled: true
@@ -117,18 +87,30 @@ livenessProbe:
   initialDelaySeconds: 30
   periodSeconds: 10
 
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    memory: 512Mi
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: DoNotSchedule
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
 
 hpa:
-  enabled: false
-
-pdb:
-  enabled: false
-
-ingress:
-  enabled: false
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      selectPolicy: Max
+      policies:
+        - type: "Percent"
+          value: 100
+          periodSeconds: 15
+        - type: "Pods"
+          value: 2
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Min
+      policies:
+        - type: "Pods"
+          value: 1
+          periodSeconds: 60

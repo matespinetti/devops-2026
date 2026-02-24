@@ -7,11 +7,8 @@ global:
 component: api
 
 labels:
-  environment: dev
-  team: ""
-  owner: ""
-
-replicaCount: 2
+  team: "backend"
+  owner: "matespinetti"
 
 image:
   repository: public.ecr.aws/aws-containers/retail-store-sample-checkout
@@ -35,7 +32,7 @@ configMap:
   data:
     PORT: "8080"
     RETAIL_CHECKOUT_PERSISTENCE_PROVIDER: "redis"
-    RETAIL_CHECKOUT_ENDPOINTS_ORDERS: "http://orders:8080"
+    RETAIL_CHECKOUT_ENDPOINTS_ORDERS: ""
     RETAIL_CHECKOUT_SHIPPING_NAME_PREFIX: ""
 
 envFrom:
@@ -60,24 +57,6 @@ secretProviderClass:
   enabled: true
   name: checkout-aws-ssm
   provider: aws
-  parameters:
-    region: us-east-1
-    usePodIdentity: "true"
-    objects: |
-      - objectName: "/retail/dev/checkout/redis_host"
-        objectType: "ssmparameter"
-        objectAlias: REDIS_HOST
-      - objectName: "/retail/dev/checkout/redis_port"
-        objectType: "ssmparameter"
-        objectAlias: REDIS_PORT
-  secretObjects:
-    - secretName: checkout-redis
-      type: Opaque
-      data:
-        - objectName: REDIS_HOST
-          key: REDIS_HOST
-        - objectName: REDIS_PORT
-          key: REDIS_PORT
 
 readinessProbe:
   enabled: true
@@ -91,18 +70,30 @@ livenessProbe:
   initialDelaySeconds: 30
   periodSeconds: 10
 
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    memory: 512Mi
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: DoNotSchedule
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
 
 hpa:
-  enabled: false
-
-pdb:
-  enabled: false
-
-ingress:
-  enabled: false
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      selectPolicy: Max
+      policies:
+        - type: "Percent"
+          value: 100
+          periodSeconds: 15
+        - type: "Pods"
+          value: 2
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Min
+      policies:
+        - type: "Pods"
+          value: 1
+          periodSeconds: 60

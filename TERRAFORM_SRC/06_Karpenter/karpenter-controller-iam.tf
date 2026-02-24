@@ -1,4 +1,4 @@
-data "aws_policy_document" "karpenter_controller_assume_policy" {
+data "aws_iam_policy_document" "karpenter_controller_assume_policy" {
   statement {
     effect = "Allow"
     principals {
@@ -300,7 +300,7 @@ data "aws_iam_policy_document" "karpenter_controller" {
     ]
 
     resources = [
-      aws_sqs_queue.karpenter_interruption.arn,
+      aws_sqs_queue.karpenter_interruptions_queue.arn,
     ]
   }
 
@@ -316,7 +316,7 @@ data "aws_iam_policy_document" "karpenter_controller" {
     ]
 
     resources = [
-      aws_iam_role.karpenter_node.arn,
+      aws_iam_role.karpenter_node_role.arn,
     ]
 
     condition {
@@ -512,22 +512,22 @@ data "aws_iam_policy_document" "karpenter_controller" {
 
 resource "aws_iam_role" "karpenter_controller_role" {
   name               = "${local.name_prefix}-karpenter-controller-role"
-  assume_role_policy = data.aws_policy_document.karpenter_controller_assume_policy.json
+  assume_role_policy = data.aws_iam_policy_document.karpenter_controller_assume_policy.json
   tags = {
     Name = "${local.name_prefix}-karpenter-controller-role"
   }
 }
 
-resource "aws_iam_role_policy" "karpenter_controller_policy" {
-  name   = "${local.name_prefix}-karpenter-controller-policy"
-  role   = aws_iam_role.karpenter_controller_role.name
+resource "aws_iam_policy" "karpenter_controller_policy" {
+  name = "${local.name_prefix}-karpenter-controller-policy"
+
   policy = data.aws_iam_policy_document.karpenter_controller.json
 
 }
 
 resource "aws_iam_role_policy_attachment" "karpenter_controller_policy_attachment" {
   role       = aws_iam_role.karpenter_controller_role.name
-  policy_arn = aws_iam_role_policy.karpenter_controller_policy.arn
+  policy_arn = aws_iam_policy.karpenter_controller_policy.arn
 }
 
 

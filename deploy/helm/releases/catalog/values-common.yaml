@@ -7,11 +7,8 @@ global:
 component: api
 
 labels:
-  environment: dev
-  team: ""
-  owner: ""
-
-replicaCount: 1
+  team: "backend"
+  owner: "matespinetti"
 
 image:
   repository: public.ecr.aws/aws-containers/retail-store-sample-catalog
@@ -30,15 +27,7 @@ service:
 
 externalServices:
   enabled: false
-  services : []
-  
-  # services:
-  #   - name: catalog-db
-  #     externalName: retail-dev-catalog-db.cy960e2gkuba.us-east-1.rds.amazonaws.com:3306
-  #     ports:
-  #       - name: mysql
-  #         port: 3306
-  #         protocol: TCP
+  services: []
 
 containerPort: 8080
 
@@ -46,14 +35,18 @@ configMap:
   enabled: true
   data:
     RETAIL_CATALOG_PERSISTENCE_PROVIDER: mysql
-    RETAIL_CATALOG_PERSISTENCE_ENDPOINT: "catalog-db.example.internal:3306"
-   
+    RETAIL_CATALOG_PERSISTENCE_ENDPOINT: ""
 
 envFrom:
   configMaps:
     - catalog
   secrets:
     - catalog-db
+
+secretProviderClass:
+  enabled: true
+  name: catalog-aws-secrets
+  provider: aws
 
 readinessProbe:
   enabled: true
@@ -67,53 +60,28 @@ livenessProbe:
   initialDelaySeconds: 30
   periodSeconds: 10
 
-resources:
-  requests:
-    cpu: 200m
-    memory: 256Mi
-  limits:
-    memory: 512Mi
+topologySpreadConstraints:
+
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
 
 hpa:
-  enabled: false
-  minReplicas: 2
-  maxReplicas: 6
-  targetCPUUtilizationPercentage: 75
-
-pdb:
-  enabled: false
-  minAvailable: 1
-
-secretProviderClass:
-  enabled: true
-  name: catalog-aws-secrets
-  provider: aws
-  parameters:
-    region: us-east-1
-    usePodIdentity: "true"
-    objects: |
-      - objectName: "/retail/dev/catalog/secrets"
-        objectType: "secretsmanager"
-        jmesPath:
-          - path: DB_USER
-            objectAlias: DB_USER
-          - path: DB_PASS
-            objectAlias: DB_PASS
-          - path: DB_NAME
-            objectAlias: DB_NAME
-  secretObjects:
-    - secretName: catalog-db
-      type: Opaque
-      data:
-        - objectName: DB_USER
-          key: RETAIL_CATALOG_PERSISTENCE_USER
-        - objectName: DB_PASS
-          key: RETAIL_CATALOG_PERSISTENCE_PASSWORD
-        - objectName: DB_NAME
-          key: RETAIL_CATALOG_PERSISTENCE_DB_NAME
-
-networkPolicy:
-  enabled: false
-
-ingress:
-  enabled: false
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      selectPolicy: Max
+      policies:
+        - type: "Percent"
+          value: 100
+          periodSeconds: 15
+        - type: "Pods"
+          value: 4
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Min
+      policies:
+        - type: "Pods"
+          value: 1
+          periodSeconds: 60

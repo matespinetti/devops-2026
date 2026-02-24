@@ -11,7 +11,7 @@ resource "helm_release" "karpenter" {
     },
     {
       name  = "settings.clusterEndpoint"
-      value = data.terraform_remote_state.eks.outputs.cluster_endpoint
+      value = data.terraform_remote_state.eks.outputs.eks_cluster_endpoint
 
     },
     {

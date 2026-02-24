@@ -26,7 +26,7 @@ resource "aws_iam_role_policy_attachment" "karpenter_node_role_policy_attachment
 }
 
 resource "aws_eks_access_entry" "karpenter_node_access_entry" {
-  cluster_name  = data.aws_eks_cluster.main.name
+  cluster_name  = local.cluster_name
   principal_arn = aws_iam_role.karpenter_node_role.arn
   type          = "EC2_LINUX"
 

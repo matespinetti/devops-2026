@@ -1,8 +1,30 @@
-configMap:
-  data:
-    RETAIL_CART_PERSISTENCE_PROVIDER: "dynamodb"
-    RETAIL_CART_PERSISTENCE_DYNAMODB_ENDPOINT: ""
-    RETAIL_CART_PERSISTENCE_DYNAMODB_CREATE_TABLE: "false"
+labels:
+  environment: "dev"
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+
+nodeSelector:
+  karpenter.sh/capacity-type: "spot"
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+ingress:
+  enabled: false
 
 secretProviderClass:
   parameters:
@@ -12,3 +34,9 @@ secretProviderClass:
       - objectName: "/retail/dev/cart/items_table_name"
         objectType: "ssmparameter"
         objectAlias: ITEMS_TABLE_NAME
+  secretObjects:
+    - secretName: cart-items
+      type: Opaque
+      data:
+        - objectName: ITEMS_TABLE_NAME
+          key: ITEMS_TABLE_NAME

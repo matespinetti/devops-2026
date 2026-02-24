@@ -1,3 +1,31 @@
+labels:
+  environment: "dev"
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+nodeSelector:
+  karpenter.sh/capacity-type: "spot"
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+ingress:
+  enabled: false
+
 configMap:
   data:
     RETAIL_CHECKOUT_PERSISTENCE_PROVIDER: "redis"
@@ -15,3 +43,11 @@ secretProviderClass:
       - objectName: "/retail/dev/checkout/redis_port"
         objectType: "ssmparameter"
         objectAlias: REDIS_PORT
+  secretObjects:
+    - secretName: checkout-redis
+      type: Opaque
+      data:
+        - objectName: REDIS_HOST
+          key: REDIS_HOST
+        - objectName: REDIS_PORT
+          key: REDIS_PORT

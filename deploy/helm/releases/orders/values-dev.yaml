@@ -1,3 +1,31 @@
+labels:
+  environment: "dev"
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+nodeSelector:
+  karpenter.sh/capacity-type: "spot"
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+ingress:
+  enabled: false
+
 externalServices:
   enabled: true
   services:
@@ -31,3 +59,17 @@ secretProviderClass:
             objectAlias: DB_NAME
           - path: SQS_QUEUE_URL
             objectAlias: SQS_QUEUE_URL
+  secretObjects:
+    - secretName: orders-secrets
+      type: Opaque
+      data:
+        - objectName: DB_USER
+          key: DB_USER
+        - objectName: DB_PASS
+          key: DB_PASS
+        - objectName: DB_HOST
+          key: DB_HOST
+        - objectName: DB_NAME
+          key: DB_NAME
+        - objectName: SQS_QUEUE_URL
+          key: SQS_QUEUE_URL

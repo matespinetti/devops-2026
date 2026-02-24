@@ -13,3 +13,7 @@ output "karpenter_interruptions_queue_name" {
 output "karpenter_interruptions_queue_url" {
   value = aws_sqs_queue.karpenter_interruptions_queue.url
 }
+output "karpenter_helm_metadata" {
+  description = "Metadata for Karpenter Controller Helm release"
+  value       = helm_release.karpenter.metadata
+}

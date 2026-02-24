@@ -7,11 +7,9 @@ global:
 component: ui
 
 labels:
-  environment: dev
-  team: ""
-  owner: ""
+  team: "backend"
+  owner: "matespinetti"
 
-replicaCount: 2
 
 image:
   repository: public.ecr.aws/aws-containers/retail-store-sample-ui
@@ -39,12 +37,22 @@ configMap:
     RETAIL_UI_PRODUCT_IMAGES_PATH: ""
     RETAIL_UI_ENDPOINTS_CATALOG: "http://catalog:80"
     RETAIL_UI_ENDPOINTS_CARTS: "http://cart:80"
-    RETAIL_UI_ENDPOINTS_ORDERS: "http://orders:80"
-    RETAIL_UI_ENDPOINTS_CHECKOUT: "http://checkout:80"
+    # RETAIL_UI_ENDPOINTS_ORDERS: "http://orders:80"
+    # RETAIL_UI_ENDPOINTS_CHECKOUT: "http://checkout:80"
+    # RETAIL_UI_ENDPOINTS_CATALOG: ""
+    # RETAIL_UI_ENDPOINTS_CARTS: ""
+    RETAIL_UI_ENDPOINTS_ORDERS: ""
+    RETAIL_UI_ENDPOINTS_CHECKOUT: ""
 
 envFrom:
   configMaps:
     - ui
+
+startupProbe:
+  enabled: true
+  path: "/actuator/health/liveness"
+  failureThreshold: 18
+  periodSeconds: 10
 
 readinessProbe:
   enabled: true
@@ -58,18 +66,31 @@ livenessProbe:
   initialDelaySeconds: 30
   periodSeconds: 10
 
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    memory: 512Mi
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: DoNotSchedule
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
 
 hpa:
-  enabled: false
-
-pdb:
-  enabled: false
-
-ingress:
-  enabled: false
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      selectPolicy: Max
+      policies:
+        - type: "Percent"
+          value: 100
+          periodSeconds: 15
+        - type: "Pods"
+          value: 2
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Min
+      policies:
+        - type: "Pods"
+          value: 1
+          periodSeconds: 60
+      

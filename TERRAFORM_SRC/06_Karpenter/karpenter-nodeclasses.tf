@@ -6,7 +6,7 @@ resource "kubectl_manifest" "karpenter_nodeclass" {
       name: default-ec2nodeclass
     spec:
       amiFamily: AL2023
-      role: karpenter-node-role
+      role: ${aws_iam_role.karpenter_node_role.name}
       amiSelectorTerms:
         - alias: al2023@latest
       subnetSelectorTerms:
@@ -33,9 +33,9 @@ resource "kubectl_manifest" "karpenter_nodeclass" {
 
   # IMPORTANTE: Asegurate de descomentar y ajustar esto con el nombre 
   # exacto de tu helm_release para evitar el error del CRD no encontrado.
-  # depends_on = [
-  #   helm_release.karpenter 
-  # ]
+  depends_on = [
+    helm_release.karpenter
+  ]
 }
 
 resource "kubectl_manifest" "karpenter_ondemand_nodepool" {

@@ -7,11 +7,8 @@ global:
 component: api
 
 labels:
-  environment: dev
-  team: ""
-  owner: ""
-
-replicaCount: 2
+  team: "backend"
+  owner: "matespinetti"
 
 image:
   repository: public.ecr.aws/aws-containers/retail-store-sample-cart
@@ -53,19 +50,13 @@ secretProviderClass:
   enabled: true
   name: cart-aws-ssm
   provider: aws
-  parameters:
-    region: us-east-1
-    usePodIdentity: "true"
-    objects: |
-      - objectName: "/retail/dev/cart/items_table_name"
-        objectType: "ssmparameter"
-        objectAlias: ITEMS_TABLE_NAME
-  secretObjects:
-    - secretName: cart-items
-      type: Opaque
-      data:
-        - objectName: ITEMS_TABLE_NAME
-          key: ITEMS_TABLE_NAME
+
+
+startupProbe:
+  enabled: true
+  path: /actuator/health
+  failureThreshold: 30
+  periodSeconds: 10
 
 readinessProbe:
   enabled: true
@@ -79,18 +70,27 @@ livenessProbe:
   initialDelaySeconds: 30
   periodSeconds: 10
 
-resources:
-  requests:
-    cpu: 100m
-    memory: 256Mi
-  limits:
-    memory: 512Mi
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
 
 hpa:
-  enabled: false
-
-pdb:
-  enabled: false
-
-ingress:
-  enabled: false
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      selectPolicy: Max
+      policies:
+        - type: "Percent"
+          value: 100
+          periodSeconds: 15
+        - type: "Pods"
+          value: 2
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Min
+      policies:
+        - type: "Pods"
+          value: 1
+          periodSeconds: 60

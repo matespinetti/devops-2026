@@ -1,4 +1,30 @@
+labels:
+  environment: "dev"
+
 replicaCount: 2
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 32Mi
+  limits:
+    memory: 64Mi
+
+nodeSelector:
+  karpenter.sh/capacity-type: "spot"
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+ingress:
+  enabled: false
 
 externalServices:
   enabled: true
@@ -12,13 +38,13 @@ externalServices:
 
 configMap:
   data:
-    RETAIL_CATALOG_PERSISTENCE_ENDPOINT: "catalog-db:3306"
     RETAIL_CATALOG_PERSISTENCE_PROVIDER: "mysql"
-    
+    RETAIL_CATALOG_PERSISTENCE_ENDPOINT: "catalog-db:3306"
 
 secretProviderClass:
   parameters:
     region: us-east-1
+    usePodIdentity: "true"
     objects: |
       - objectName: "/retail/dev/catalog/secrets"
         objectType: "secretsmanager"
@@ -29,3 +55,13 @@ secretProviderClass:
             objectAlias: DB_PASS
           - path: DB_NAME
             objectAlias: DB_NAME
+  secretObjects:
+    - secretName: catalog-db
+      type: Opaque
+      data:
+        - objectName: DB_USER
+          key: RETAIL_CATALOG_PERSISTENCE_USER
+        - objectName: DB_PASS
+          key: RETAIL_CATALOG_PERSISTENCE_PASSWORD
+        - objectName: DB_NAME
+          key: RETAIL_CATALOG_PERSISTENCE_DB_NAME

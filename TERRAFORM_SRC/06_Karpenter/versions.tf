@@ -22,7 +22,7 @@ terraform {
 
   backend "s3" {
     bucket       = "tfstate-dev-us-east-1-m75hlh"
-    key          = "eks-addons/dev/terraform.tfstate"
+    key          = "eks-karpenter/dev/terraform.tfstate"
     region       = "us-east-1"
     encrypt      = true
     use_lockfile = true

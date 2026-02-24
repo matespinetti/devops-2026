@@ -5,7 +5,7 @@ metadata:
   labels:
     demo: karpenter-ondemand
 spec:
-  replicas: 5
+  replicas: 2
   selector:
     matchLabels:
       app: autoscale-demo
@@ -19,7 +19,7 @@ spec:
         karpenter.sh/capacity-type: on-demand      
       containers:
         - name: pause
-          image: public.ecr.aws/eks-distro/kubernetes/pause:3.9
+          image: nginxdemos/hello
           resources:
             requests:
               cpu: "500m"
