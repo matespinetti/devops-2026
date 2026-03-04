@@ -1,0 +1,12 @@
+aws_region        = "us-east-1"
+environment_name  = "dev"
+business_division = "retail"
+project_name      = "RetailStore"
+owner_email       = "platform@example.com"
+
+# Optional custom tags for cost allocation, ownership, and compliance.
+tags = {
+  CostCenter  = "platform"
+  DataClass   = "internal"
+  Terraform   = "true"
+}

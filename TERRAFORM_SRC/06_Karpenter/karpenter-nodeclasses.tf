@@ -119,7 +119,7 @@ resource "kubectl_manifest" "karpenter_spot_nodepool" {
               values: ["t3", "t3a", "t2", "c5a", "c6a"]
             - key: "karpenter.k8s.aws/instance-size"
               operator: In
-              values: ["micro", "small", "medium", "large"]
+              values: ["medium", "large"]
       limits:
         cpu: "50"
       disruption:

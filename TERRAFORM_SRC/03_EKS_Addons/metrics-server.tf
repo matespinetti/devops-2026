@@ -3,7 +3,7 @@ resource "helm_release" "metrics-server" {
   repository = "https://kubernetes-sigs.github.io/metrics-server"
   chart      = "metrics-server"
   namespace  = "kube-system"
-  version ="3.13.0"
-  
+  version    = "3.13.0"
+
 
 }

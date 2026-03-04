@@ -3,6 +3,12 @@ labels:
 
 replicaCount: 2
 
+podAnnotations:
+  instrumentation.opentelemetry.io/inject-sdk: "default-instrumentation"
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
 resources:
   requests:
     cpu: 20m

@@ -6,6 +6,12 @@ labels:
 #1. Start small in Dev
 replicaCount: 2
 
+podAnnotations:
+  instrumentation.opentelemetry.io/inject-sdk: "default-instrumentation"
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/actuator/prometheus"
+
 #2. Dev-specific sizing
 resources:
   requests:
@@ -41,7 +47,7 @@ ingress:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:418674668464:certificate/332e3b54-06ad-45c3-b3b7-f1a728c86f29
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:418674668464:certificate/03f3a6cd-3c7c-413a-b615-6b9fa2e720a0
     external-dns.alpha.kubernetes.io/hostname: retail-dev.matespinetti.me
   hosts:
     - host: "retail-dev.matespinetti.me"

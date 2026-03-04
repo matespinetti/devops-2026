@@ -1,0 +1,25 @@
+# 1. Disable what you already installed via Terraform
+nodeExporter:
+  enabled: false
+kubeStateMetrics:
+  enabled: false
+kubernetesServiceMonitors:
+  enabled: false # Disables default scrapers since you have them already
+
+# 2. Disable Alertmanager to save RAM on your t3.mediums
+alertmanager:
+  enabled: false
+
+# 3. Configure Grafana for easy access
+grafana:
+  enabled: true
+  adminPassword: "admin"
+
+# 4. Configure Prometheus to accept your ADOT metrics
+prometheus:
+  enabled: true
+  prometheusSpec:
+    # CRITICAL: This acts as the "Receiver Door" for your OpenTelemetry Collector
+    enableRemoteWriteReceiver: true
+    # Keep data for 2 days to save disk space while learning
+    retention: 2d

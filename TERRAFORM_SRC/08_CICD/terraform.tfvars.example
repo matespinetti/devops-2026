@@ -1,0 +1,39 @@
+aws_region        = "us-east-1"
+business_division = "retail"
+environment_name  = "dev"
+project_name      = "RetailStore"
+owner_email       = "mateospinetti1@gmail.com"
+
+# GitHub org/user that owns your microservice repositories.
+github_organization = "matespinetti"
+
+# One entry per microservice repository.
+services = {
+  cart = {
+    repo_name = "retail-cart"
+    branch    = "main"
+  }
+  catalog = {
+    repo_name = "retail-catalog"
+    branch    = "main"
+  }
+  checkout = {
+    repo_name = "retail-checkout"
+    branch    = "main"
+  }
+  orders = {
+    repo_name = "retail-orders"
+    branch    = "main"
+  }
+  ui = {
+    repo_name = "retail-ui"
+    branch    = "main"
+  }
+}
+
+ecr_repository_prefix = "retail-dev-"
+ecr_image_keep_count  = 50
+
+tags = {
+  Terraform = "true"
+}

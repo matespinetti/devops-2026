@@ -3,6 +3,12 @@ labels:
 
 replicaCount: 2
 
+podAnnotations:
+  instrumentation.opentelemetry.io/inject-sdk: "default-instrumentation"
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
 resources:
   requests:
     cpu: 100m
@@ -29,7 +35,7 @@ ingress:
 configMap:
   data:
     RETAIL_CHECKOUT_PERSISTENCE_PROVIDER: "redis"
-    RETAIL_CHECKOUT_ENDPOINTS_ORDERS: "http://orders:8080"
+    RETAIL_CHECKOUT_ENDPOINTS_ORDERS: "http://orders:80"
     RETAIL_CHECKOUT_SHIPPING_NAME_PREFIX: ""
 
 secretProviderClass:
